@@ -9,7 +9,6 @@
 % Add pair, storage mode 'SY'
 function msg = addPairSY(AQN,s,y)
 
-
 % Check aggregation option
 if ~AQN.aggregate
   
