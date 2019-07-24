@@ -7,7 +7,7 @@
 % Method definition for AggQN class
 
 % Runs unit test
-function runUnitTest(AQN,number,invM,rhs,level,phi,phi_comb,N)
+function runUnitTest(AQN,number,invM,rhs,level,phi,phi_comb,N,rotation_matrix,s,y,s_rotated)
 
 % Check whether in debug mode
 if AQN.debug == false, return; end
@@ -106,6 +106,14 @@ switch number
       fprintf('AggQN: Error in satisfaction of b definition  : %e\n',max(abs(matrix2)));
       fprintf('AggQN: Error in satisfaction of quadratic     : %e\n',max(max(matrix3)));
     end
+    
+  % Unittest for rotation matrices
+  case 6
+        
+      fprintf('AggQN: Error in s_rotated = R*s       : %e\n',norm(s_rotated - rotation_matrix*s));
+      fprintf('AggQN: Error in SY_rotated = SY       : %e\n',abs(s'*y - s_rotated'*(rotation_matrix*y)));
+      fprintf('AggQN: Error in the norm of y_rotated : %e\n',abs(norm(rotation_matrix*y)-norm(y)));
+        
   
   otherwise
     
