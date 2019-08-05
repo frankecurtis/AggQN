@@ -123,12 +123,26 @@ else
       AQN.addDataSY(s,y);
       
       % Set message
-      msg = 'Add';
+      msg = 'Ad2';
       
       % Print message
       if AQN.verbosity >= 1
         fprintf('AggQN: Pair added into inverse Hessian approximation.\n');
       end
+      
+    elseif cond([AQN.S s]'*[AQN.S s]) <= AQN.cond_tol_1 && size(AQN.S,2) >= AQN.m
+            
+      %%%%%%%%%%%%%
+      % SWAP ONLY %
+      %%%%%%%%%%%%%
+            
+      msg = 'Sw1';
+            
+      % Delete data
+      AQN.deleteDataSY(1);
+            
+      % Add data
+      AQN.addDataSY(s,y);
       
     else
       
@@ -138,61 +152,63 @@ else
       
       % Set bool for doing rotation
       % ... true if steps are linearly independent, false otherwise
-      %do_rotation = (norm(AQN.S*v - s)/norm(AQN.S*v) > AQN.lin_ind_tol);
+      % do_rotation = (norm(AQN.S*v - s)/norm(AQN.S*v) > AQN.lin_ind_tol);
       
-      % Find pair to aggregate (TO DO: MAKE MORE EFFICIENT)
-      for i = 1:size(AQN.S,2)
-        if i == size(AQN.S,2) || cond([AQN.S(:,end-i+1:end) s]'*[AQN.S(:,end-i+1:end) s]) > AQN.cond_tol_2
-          AQN.j = size(AQN.S,2) - i + 1;
-          break;
-        end
-      end
-      
-      % Sanity check for being parallel with latest pair
-      if AQN.j == size(AQN.S,2)
-        
-        % Delete data
-        AQN.deleteDataSY(size(AQN.S,2));
-        
-        % Add data
-        AQN.addDataSY(s,y);
-        
-        % Set message
-        msg = 'Swp';
-        
-        % Print message
-        if AQN.verbosity >= 1
-          fprintf('AggQN: Pair aggregated into inverse Hessian approximation; parallel with previous pair based in cond_tol_2.\n');
-        end
-        
-      else
-        
-        % Check condition number of potential S
-        if cond([AQN.S(:,1:AQN.j-1) AQN.S(:,AQN.j+1:end)]'*[AQN.S(:,1:AQN.j-1) AQN.S(:,AQN.j+1:end)]) > AQN.cond_tol_3
-          
-          % Set message
-          msg = 'Adj';
-          
-          % Check history length
-          if size(AQN.S,2) >= AQN.m
+%       % Find pair to aggregate (TO DO: MAKE MORE EFFICIENT)
+%       for i = 1:size(AQN.S,2)
+%         if i == size(AQN.S,2) || cond([AQN.S(:,end-i+1:end) s]'*[AQN.S(:,end-i+1:end) s]) > AQN.cond_tol_2
+%           AQN.j = size(AQN.S,2) - i + 1;
+%           break;
+%         end
+%       end
+
+      recur = true;
+      i1 = size(AQN.S,2);
             
-            % Delete oldest pair
-            AQN.deleteDataSY(1);
-            
-            % Update message
-            msg = 'Swj';
-          
+      % To make more efficient to check less j.
+      while recur
+          for i = i1 : -1 : 1
+              if i == 1 || cond([AQN.S(:,i:end) s]'*[AQN.S(:,i:end) s]) > AQN.cond_tol_2
+                  AQN.j = i;
+                  i1 = i;
+                  break;
+              end
           end
-          
-          % Add new data
+                
+          if cond([AQN.S(:,1:AQN.j-1) AQN.S(:,AQN.j+1:end) s]'*[AQN.S(:,1:AQN.j-1) AQN.S(:,AQN.j+1:end) s]) > AQN.cond_tol_3
+              recur = true;
+              AQN.deleteDataSY(AQN.j);
+          else
+              recur = false;
+          end
+      end
+            
+      % Sanity check for being parallel with latest pair
+      if AQN.j == size(AQN.S,2) && AQN.j == 1
+                
+          % Set message
+          msg = 'Ad3';
+                
+          % Add data
           AQN.addDataSY(s,y);
-          
+                
+      elseif AQN.j == size(AQN.S,2) 
+                
+          % Delete data
+          AQN.deleteDataSY(size(AQN.S,2));
+                
+          % Add data
+          AQN.addDataSY(s,y);
+                
+          % Set message
+          msg = 'Pr2';
+                
           % Print message
           if AQN.verbosity >= 1
-            fprintf('AggQN: Pair swapped into inverse Hessian approximation; oldest pair forgotten.\n');
+              fprintf('AggQN: Pair aggregated into inverse Hessian approximation; parallel with previous pair based in cond_tol_2.\n');
           end
           
-        else
+      else
                     
           % Store pair data for aggregation
           AQN.s_j   = AQN.S(:,AQN.j);
@@ -218,13 +234,13 @@ else
           AQN.tau_j = flipud(AQN.tau_j);
           
           % Check angle
-          if (abs(AQN.s_j'*AQN.S(:,AQN.j+1:end)*AQN.tau_j)/(norm(AQN.s_j)*norm(AQN.S(:,AQN.j+1:end)*AQN.tau_j))) < 0.75
+          if (abs(AQN.s_j'*AQN.S(:,AQN.j+1:end)*AQN.tau_j)/(norm(AQN.s_j)*norm(AQN.S(:,AQN.j+1:end)*AQN.tau_j))) < 0.9
             
-            % Increase history length
-            AQN.m = AQN.m + 1;
-            
+            % Delete data for SY
+            AQN.deleteDataSY(AQN.j);
+                    
             % Set message
-            msg = 'Ad2';
+            msg = 'Swj';
 
             % Print message
             if AQN.verbosity >= 1
@@ -250,11 +266,14 @@ else
             
             rot_vec1 = rot_sc1 * AQN.s_j + rot_sc2 * s_j_rotated;
             rot_vec2 = (s_j_rotated - AQN.s_j - (AQN.s_j'*AQN.s_j)*rot_vec1)/(AQN.s_j'*s_j_rotated);
-            rotation_matrix = rot_vec1 * AQN.s_j' + rot_vec2 * s_j_rotated' + eye(AQN.n);
+            % rotation_matrix = rot_vec1 * AQN.s_j' + rot_vec2 * s_j_rotated' + eye(AQN.n);
+            
+            % AQN.runUnitTest(6,[],[],[],[],[],[],rotation_matrix,AQN.s_j,AQN.y_j,s_j_rotated);
             
             % Rotate vectors
             AQN.s_j = s_j_rotated;
-            AQN.y_j = rotation_matrix * AQN.y_j;            
+            % AQN.y_j = rotation_matrix * AQN.y_j;  
+            AQN.y_j = (AQN.s_j' * AQN.y_j) * rot_vec1 + (s_j_rotated' * AQN.y_j) * rot_vec2 + AQN.y_j;
             
             if AQN.precondition == 1
                 % Compute aggregation vector
@@ -292,4 +311,3 @@ else
   
 end
 
-end

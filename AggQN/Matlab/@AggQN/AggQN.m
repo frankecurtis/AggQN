@@ -118,7 +118,7 @@ classdef AggQN < handle
     aggregate    = true  % aggregation
                          %  true  = aggregation on
                          %  false = aggregation off
-    debug        = true  % debug mode
+    debug        = false % debug mode
     verbosity    = 0     % verbosity level
                          %  0 = prints nothing
                          %  1 = prints warnings and short messages
@@ -176,9 +176,9 @@ classdef AggQN < handle
     % TOLERANCES %
     %%%%%%%%%%%%%%
     chol_pert_init = 1e-15
-    cond_tol_1     = 1e+14
-    cond_tol_2     = 1e+14
-    cond_tol_3     = 1e+06
+    cond_tol_1     = 1e+12
+    cond_tol_2     = 1e+13
+    cond_tol_3     = 1e+13
     cond_tol_beta  = 1e+14
     %lin_ind_tol    = 1e-08
     parallel_tol   = 1e-15
@@ -213,7 +213,7 @@ classdef AggQN < handle
     deleteDataSY(AQN,s,y)
     
     % Run unit test
-    runUnitTest(AQN,number,invQ,rhs,level,phi,phi_comb,N)
+    runUnitTest(AQN,number,invQ,rhs,level,phi,phi_comb,N,rotation_matrix,s,y,s_rotated)
     
     % Run unit test
     runUnitTestOld(AQN,number,invQ,rhs,level,phi,phi_comb,N)
