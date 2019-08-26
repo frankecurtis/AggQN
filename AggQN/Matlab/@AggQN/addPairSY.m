@@ -237,7 +237,7 @@ else
           AQN.tau_j = flipud(AQN.tau_j);
           
           % Check angle
-          if (abs(AQN.s_j'*AQN.S(:,AQN.j+1:end)*AQN.tau_j)/(norm(AQN.s_j)*norm(AQN.S(:,AQN.j+1:end)*AQN.tau_j))) < 1 - 1e-2
+          if (abs(AQN.s_j'*AQN.S(:,AQN.j+1:end)*AQN.tau_j)/(norm(AQN.s_j)*norm(AQN.S(:,AQN.j+1:end)*AQN.tau_j))) < 1 - 1e-1
               
               (abs(AQN.s_j'*AQN.S(:,AQN.j+1:end)*AQN.tau_j)/(norm(AQN.s_j)*norm(AQN.S(:,AQN.j+1:end)*AQN.tau_j)))
               cond(AQN.S(:,AQN.j+1:end)'*AQN.S(:,AQN.j+1:end))
@@ -259,25 +259,37 @@ else
             % Set message
             msg = 'Agg';
             
-            % Set projected then rotated s_j
-            s_j_rotated = AQN.S(:,AQN.j:end)*AQN.tau_j;
-            AQN.tau_j = AQN.tau_j * norm(AQN.s_j) / norm(s_j_rotated);
-            s_j_rotated = s_j_rotated * norm(AQN.s_j) / norm(s_j_rotated);
-            
-            % Set rotation matrix
-            rot_sc1 = -1/(AQN.s_j'*AQN.s_j + AQN.s_j'*s_j_rotated);
-            rot_sc2 = (1 - (AQN.s_j'*s_j_rotated) * rot_sc1)/(AQN.s_j'*AQN.s_j);
-            
-            rot_vec1 = rot_sc1 * AQN.s_j + rot_sc2 * s_j_rotated;
-            rot_vec2 = (s_j_rotated - AQN.s_j - (AQN.s_j'*AQN.s_j)*rot_vec1)/(AQN.s_j'*s_j_rotated);
-            % rotation_matrix = rot_vec1 * AQN.s_j' + rot_vec2 * s_j_rotated' + eye(AQN.n);
-            
-            % AQN.runUnitTest(6,[],[],[],[],[],[],rotation_matrix,AQN.s_j,AQN.y_j,s_j_rotated);
-            
-            % Rotate vectors
-            AQN.s_j = s_j_rotated;
-            % AQN.y_j = rotation_matrix * AQN.y_j;  
-            AQN.y_j = (AQN.s_j' * AQN.y_j) * rot_vec1 + (s_j_rotated' * AQN.y_j) * rot_vec2 + AQN.y_j;
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+%             % Set Rotation
+%             % Set projected then rotated s_j
+%             s_j_rotated = AQN.S(:,AQN.j:end)*AQN.tau_j;
+%             AQN.tau_j = AQN.tau_j * norm(AQN.s_j) / norm(s_j_rotated);
+%             s_j_rotated = s_j_rotated * norm(AQN.s_j) / norm(s_j_rotated);
+%             
+%             % Set rotation matrix
+%             rot_sc1 = -1/(AQN.s_j'*AQN.s_j + AQN.s_j'*s_j_rotated);
+%             rot_sc2 = (1 - (AQN.s_j'*s_j_rotated) * rot_sc1)/(AQN.s_j'*AQN.s_j);
+%             
+%             rot_vec1 = rot_sc1 * AQN.s_j + rot_sc2 * s_j_rotated;
+%             rot_vec2 = (s_j_rotated - AQN.s_j - (AQN.s_j'*AQN.s_j)*rot_vec1)/(AQN.s_j'*s_j_rotated);
+%             % rotation_matrix = rot_vec1 * AQN.s_j' + rot_vec2 * s_j_rotated' + eye(AQN.n);
+%             
+%             % AQN.runUnitTest(6,[],[],[],[],[],[],rotation_matrix,AQN.s_j,AQN.y_j,s_j_rotated);
+%             
+%             % Rotate vectors
+%             AQN.s_j = s_j_rotated;
+%             % AQN.y_j = rotation_matrix * AQN.y_j;  
+%             AQN.y_j = (AQN.s_j' * AQN.y_j) * rot_vec1 + (s_j_rotated' * AQN.y_j) * rot_vec2 + AQN.y_j;
+
+%%%%%%%%%%%%%%%%%%%%%%%
+%             % Only projection
+%             s_j_projection = AQN.S(:,AQN.j:end)*AQN.tau_j;
+%             
+%             if s_j_projection'*AQN.y_j < 1e-6*(s_j_projection'*s_j_projection)
+%                 theta = (1 - 1e-6)*(s_j_projection'*s_j_projection)/(s_j_projection'*s_j_projection - s_j_projection'*AQN.y_j);
+%                 AQN.y_j = theta*AQN.y_j + (1-theta)*s_j_projection;
+%             end
+%             AQN.s_j = s_j_projection;
             
             if AQN.precondition == 1
                 % Compute aggregation vector
