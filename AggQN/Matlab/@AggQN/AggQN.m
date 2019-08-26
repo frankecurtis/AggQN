@@ -176,7 +176,7 @@ classdef AggQN < handle
     % TOLERANCES %
     %%%%%%%%%%%%%%
     chol_pert_init = 1e-15
-    cond_tol_1     = 1e+12
+    cond_tol_1     = 1e+15
     cond_tol_2     = 1e+13
     cond_tol_3     = 1e+13
     cond_tol_beta  = 1e+14

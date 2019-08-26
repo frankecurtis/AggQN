@@ -154,41 +154,44 @@ else
       % ... true if steps are linearly independent, false otherwise
       % do_rotation = (norm(AQN.S*v - s)/norm(AQN.S*v) > AQN.lin_ind_tol);
       
-%       % Find pair to aggregate (TO DO: MAKE MORE EFFICIENT)
-%       for i = 1:size(AQN.S,2)
-%         if i == size(AQN.S,2) || cond([AQN.S(:,end-i+1:end) s]'*[AQN.S(:,end-i+1:end) s]) > AQN.cond_tol_2
-%           AQN.j = size(AQN.S,2) - i + 1;
-%           break;
-%         end
-%       end
-
-      recur = true;
-      i1 = size(AQN.S,2);
-            
-      % To make more efficient to check less j.
-      while recur
-          for i = i1 : -1 : 1
-              if i == 1 || cond([AQN.S(:,i:end) s]'*[AQN.S(:,i:end) s]) > AQN.cond_tol_2
-                  AQN.j = i;
-                  i1 = i;
-                  break;
-              end
-          end
-                
-          if cond([AQN.S(:,1:AQN.j-1) AQN.S(:,AQN.j+1:end) s]'*[AQN.S(:,1:AQN.j-1) AQN.S(:,AQN.j+1:end) s]) > AQN.cond_tol_3
-              recur = true;
-              AQN.deleteDataSY(AQN.j);
-          else
-              recur = false;
-          end
+      % Find pair to aggregate (TO DO: MAKE MORE EFFICIENT)
+      for i = 1:size(AQN.S,2)
+        if i == size(AQN.S,2) || cond([AQN.S(:,end-i+1:end) s]'*[AQN.S(:,end-i+1:end) s]) > AQN.cond_tol_2
+          AQN.j = size(AQN.S,2) - i + 1;
+          break;
+        end
       end
+
+%       recur = true;
+%       i1 = size(AQN.S,2);
+%             
+%       % To make more efficient to check less j.
+%       while recur
+%           for i = i1 : -1 : 1
+%               if i == 1 || cond([AQN.S(:,i:end) s]'*[AQN.S(:,i:end) s]) > AQN.cond_tol_2
+%                   AQN.j = i;
+%                   i1 = i;
+%                   break;
+%               end
+%           end
+%                 
+%           if cond([AQN.S(:,1:AQN.j-1) AQN.S(:,AQN.j+1:end) s]'*[AQN.S(:,1:AQN.j-1) AQN.S(:,AQN.j+1:end) s]) > AQN.cond_tol_3
+%               recur = true;
+%               AQN.deleteDataSY(AQN.j);
+%           else
+%               recur = false;
+%           end
+%       end
             
       % Sanity check for being parallel with latest pair
       if AQN.j == size(AQN.S,2) && AQN.j == 1
                 
           % Set message
-          msg = 'Ad3';
+          msg = 'Sw2';
                 
+          % Delete data
+          AQN.deleteDataSY(1);
+          
           % Add data
           AQN.addDataSY(s,y);
                 
@@ -234,13 +237,14 @@ else
           AQN.tau_j = flipud(AQN.tau_j);
           
           % Check angle
-          if (abs(AQN.s_j'*AQN.S(:,AQN.j+1:end)*AQN.tau_j)/(norm(AQN.s_j)*norm(AQN.S(:,AQN.j+1:end)*AQN.tau_j))) < 0.9
-            
-            % Delete data for SY
-            AQN.deleteDataSY(AQN.j);
+          if (abs(AQN.s_j'*AQN.S(:,AQN.j+1:end)*AQN.tau_j)/(norm(AQN.s_j)*norm(AQN.S(:,AQN.j+1:end)*AQN.tau_j))) < 1 - 1e-2
+              
+              (abs(AQN.s_j'*AQN.S(:,AQN.j+1:end)*AQN.tau_j)/(norm(AQN.s_j)*norm(AQN.S(:,AQN.j+1:end)*AQN.tau_j)))
+              cond(AQN.S(:,AQN.j+1:end)'*AQN.S(:,AQN.j+1:end))
+              cond([AQN.s_j AQN.S(:,AQN.j+1:end)]'*[AQN.s_j AQN.S(:,AQN.j+1:end)])
                     
             % Set message
-            msg = 'Swj';
+            msg = 'Ad3';
 
             % Print message
             if AQN.verbosity >= 1
