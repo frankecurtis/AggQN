@@ -10,19 +10,19 @@ function msg = usageMessage
 
 % Set usage message
 msg = 'AggQN: Usage: Constructors are';
-msg = [msg newline];
-msg = [msg newline '      AQN = AggQN(''SY'',I,m)'];
-msg = [msg newline '            where storage mode ''SY'''];
-msg = [msg newline '                  means initWv is a handle of a function that computes'];
-msg = [msg newline '                  matrix-vector products with the "initial" inverse Hessian'];
-msg = [msg newline '                  and initHv is a handle of a function that computes'];
-msg = [msg newline '                  matrix-vector products with the "initial" Hessian'];
-msg = [msg newline '                  and the history m must be a positive integer or inf'];
-msg = [msg newline];
-msg = [msg newline '      AQN = AggQN({''W'',''H''},M)'];
-msg = [msg newline '            where storage mode ''W'''];
-msg = [msg newline '                  means M is initial inverse Hessian'];
-msg = [msg newline '            where storage mode ''H'''];
-msg = [msg newline '                  means M is initial Hessian'];
+msg = [msg];
+msg = strcat(msg,'; ','AQN = AggQN(''SY'',I,m)');
+msg = strcat(msg,'; ','where storage mode ''SY''');
+msg = strcat(msg,'; ','means initWv is a handle of a function that computes');
+msg = strcat(msg,'; ','matrix-vector products with the "initial" inverse Hessian');
+msg = strcat(msg,'; ','and initHv is a handle of a function that computes');
+msg = strcat(msg,'; ','matrix-vector products with the "initial" Hessian');
+msg = strcat(msg,'; ','and the history m must be a positive integer or inf');
+msg = [msg];
+msg = strcat(msg,'; ','AQN = AggQN({''W'',''H''},M)');
+msg = strcat(msg,'; ','where storage mode ''W''');
+msg = strcat(msg,'; ','means M is initial inverse Hessian');
+msg = strcat(msg,'; ','where storage mode ''H''');
+msg = strcat(msg,'; ','means M is initial Hessian');
 
 end

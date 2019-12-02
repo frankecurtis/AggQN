@@ -118,12 +118,12 @@ classdef AggQN < handle
     aggregate    = true  % aggregation
                          %  true  = aggregation on
                          %  false = aggregation off
-    debug        = false % debug mode
-    verbosity    = 0     % verbosity level
+    debug        = true  % debug mode
+    verbosity    = 1     % verbosity level
                          %  0 = prints nothing
                          %  1 = prints warnings and short messages
                          %  2 = also prints data after pair added
-    precondition = 1     % precondition level
+    precondition = 0     % precondition level
                          %  0 = not use preconditioner
                          %  1 = use preconditioner
     
@@ -150,10 +150,22 @@ classdef AggQN < handle
     SY   = []  % S'*Y
                %   where S = [s_earliest ... s_latest]
                %     and Y = [y_earliest ... y_latest]
-    L_SS = []  % Cholesky factor (lower triangular) of S'*S
-               %   where S = [s_latest ... s_earliest]
-    L_SHS = [] % Cholesky factor of S'*H*S
-               %   where H = "initial" Hessian
+    L_SS      = []  % Cholesky factor (lower triangular) of S'*S
+                    %   where S = [s_latest ... s_earliest]
+    L_SS_cond = []  % Cholesky factor (lower triangular) of S_temp'*S_temp
+                    %   where S_temp is temporary S matrix for condition
+                    %   (number) check
+    L_SHS     = []  % Cholesky factor of S'*H*S
+                    %   where H = "initial" Hessian
+                    
+    %%%%%%%%%%%%%%%%%%%%
+    % Temporary values %
+    %%%%%%%%%%%%%%%%%%%%
+    S_temp     = []
+    Y_temp     = []
+    rho_temp   = []
+    SY_temp    = []
+    L_SS_temp  = []
     
     %%%%%%%%%%%%%%%%%%%%%%
     % Aggregation values %
@@ -171,17 +183,34 @@ classdef AggQN < handle
     C
     Q
     sum_diff = []
+    aggAccuracy = 0
+    startValue
+    checkFlag
+    problem_name = 'null'
+    iter_num = 0
+    DSacc
+    
     
     %%%%%%%%%%%%%%
     % TOLERANCES %
     %%%%%%%%%%%%%%
     chol_pert_init = 1e-15
     cond_tol_1     = 1e+12
-    cond_tol_2     = 1e+13
-    cond_tol_3     = 1e+13
+    cond_tol_2     = 1e+6
+    cond_tol_3     = 1e+6
     cond_tol_beta  = 1e+14
     %lin_ind_tol    = 1e-08
     parallel_tol   = 1e-15
+    angle_tol_1    = 1e-6
+    angle_tol_2    = 1e-1
+    accuracy_tol   = 1e-6
+    findiffstep    = 1e-8
+    diff_tol       = 1e-6
+    check_tol      = 1e-4
+    c1             = 1e-8
+    stepsize_limit = 1e-16
+    lambda         = 1e-12
+    maxIter        = 1e+3
     
   end
   
@@ -209,6 +238,9 @@ classdef AggQN < handle
     % Compute aggregation values 'A' and 'b' without preconditioners
     computeAggregationValuesOld(AQN)
     
+    % Compute aggregation values 'A' and 'b' with Newton's methoda
+    computeAggregationValuesWithNewton(AQN)
+    
     % Delete data, storage mode 'SY'
     deleteDataSY(AQN,s,y)
     
@@ -216,7 +248,28 @@ classdef AggQN < handle
     runUnitTest(AQN,number,invQ,rhs,level,phi,phi_comb,N,rotation_matrix,s,y,s_rotated)
     
     % Run unit test
-    runUnitTestOld(AQN,number,invQ,rhs,level,phi,phi_comb,N)
+    runUnitTestOld(AQN,number,invQ,vec_temp,rhs,level,phi,phi_comb,N)
+    
+    % Cholesky row/column addition
+    R1 = choleskyRowAdd(AQN,R,cv,n)
+    
+    % Cholesky row/column deletion
+    R1 = choleskyRowDel(AQN,R,n)
+    
+    % Map vector to a whole matrix
+    wholeMatrix = mapToMatrix(AQN,vec,width)
+    
+    % Map matrix to a vector
+    vec = mapToVector(AQN,wholeMatrix)
+    
+    % Re-run the test with failure in line search
+    runInDetail(AQN,MA_j,invM,Omega,rhs)
+    
+    % Check whether accuracy reached
+	flag = checkAccuracy(AQN,vec)
+    
+    % Check whether accuracy reached
+	flag = checkAccuracyNewton(AQN,vec)
         
   end
   
@@ -261,6 +314,22 @@ classdef AggQN < handle
         % Set as current s,y pairs
         S = AQN.S;
         Y = AQN.Y;
+        
+    end
+    
+    % Get Aggregation Accuracy
+    function [accuracy] = getAggAccuracy(AQN)
+       
+        % Set as Aggregation Accuracy
+        accuracy = AQN.aggAccuracy;
+        
+    end
+    
+    % Get Tolerance Parameter Value
+    function [TolStr] = getTolParaVal(AQN)
+        
+        % Write Tolerance Values
+        TolStr = strcat(num2str(log10(AQN.cond_tol_1)),num2str(log10(AQN.cond_tol_2)),num2str(log10(AQN.cond_tol_3)),'_',num2str(AQN.angle_tol_1),'_',num2str(AQN.angle_tol_2));
         
     end
     
@@ -314,6 +383,15 @@ classdef AggQN < handle
     
     % Sets preconditioner level
     setPreconditioner(AQN,value)
+    
+    % Sets problem name
+    setProblemName(AQN,value)
+    
+    % Sets iteration number for outer loop
+    setIterNum(AQN,value)
+    
+    % Sets tolerances if needed
+    setTolerance(AQN,tol1,tol2,tol3,tol4,tol5,tol6)
     
   end
   
