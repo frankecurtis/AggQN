@@ -291,19 +291,6 @@ else
       %%%%%%%%%%%%%%
       % AGGREGATE! %
       %%%%%%%%%%%%%%
-<<<<<<< HEAD
-      
-      % Set bool for doing rotation
-      % ... true if steps are linearly independent, false otherwise
-      % do_rotation = (norm(AQN.S*v - s)/norm(AQN.S*v) > AQN.lin_ind_tol);
-      
-      % Find pair to aggregate (TO DO: MAKE MORE EFFICIENT)
-      for i = 1:size(AQN.S,2)
-        if i == size(AQN.S,2) || cond([AQN.S(:,end-i+1:end) s]'*[AQN.S(:,end-i+1:end) s]) > AQN.cond_tol_2
-          AQN.j = size(AQN.S,2) - i + 1;
-          break;
-        end
-=======
 
       % Throw away multiple (s,y) pairs if necessary
       recur = true;
@@ -343,45 +330,16 @@ else
           else
               recur = false;
           end
->>>>>>> temp-branch
       end
-
-%       recur = true;
-%       i1 = size(AQN.S,2);
-%             
-%       % To make more efficient to check less j.
-%       while recur
-%           for i = i1 : -1 : 1
-%               if i == 1 || cond([AQN.S(:,i:end) s]'*[AQN.S(:,i:end) s]) > AQN.cond_tol_2
-%                   AQN.j = i;
-%                   i1 = i;
-%                   break;
-%               end
-%           end
-%                 
-%           if cond([AQN.S(:,1:AQN.j-1) AQN.S(:,AQN.j+1:end) s]'*[AQN.S(:,1:AQN.j-1) AQN.S(:,AQN.j+1:end) s]) > AQN.cond_tol_3
-%               recur = true;
-%               AQN.deleteDataSY(AQN.j);
-%           else
-%               recur = false;
-%           end
-%       end
             
       % Sanity check for being parallel with latest pair
       if AQN.j == size(AQN.S,2) && AQN.j == 1
                 
           % Set message
-<<<<<<< HEAD
-          msg = 'Sw2';
-=======
           msg = 'Ad0';
           
           % Set aggregation accuracy
           AQN.aggAccuracy = 0;
->>>>>>> temp-branch
-                
-          % Delete data
-          AQN.deleteDataSY(1);
           
           % Add data
           AQN.addDataSY(s,y);
@@ -431,16 +389,6 @@ else
           AQN.tau_j = flipud(AQN.tau_j);
           
           % Check angle
-<<<<<<< HEAD
-          if (abs(AQN.s_j'*AQN.S(:,AQN.j+1:end)*AQN.tau_j)/(norm(AQN.s_j)*norm(AQN.S(:,AQN.j+1:end)*AQN.tau_j))) < 1 - 1e-1
-              
-              (abs(AQN.s_j'*AQN.S(:,AQN.j+1:end)*AQN.tau_j)/(norm(AQN.s_j)*norm(AQN.S(:,AQN.j+1:end)*AQN.tau_j)))
-              cond(AQN.S(:,AQN.j+1:end)'*AQN.S(:,AQN.j+1:end))
-              cond([AQN.s_j AQN.S(:,AQN.j+1:end)]'*[AQN.s_j AQN.S(:,AQN.j+1:end)])
-                    
-            % Set message
-            msg = 'Ad3';
-=======
           if (abs(AQN.s_j'*AQN.S(:,AQN.j+1:end)*AQN.tau_j)/(norm(AQN.s_j)*norm(AQN.S(:,AQN.j+1:end)*AQN.tau_j))) < cos(AQN.angle_tol_2)
             
             % Delete data for SY
@@ -451,7 +399,6 @@ else
             
             % Set aggregation accuracy
             AQN.aggAccuracy = 0;
->>>>>>> temp-branch
 
             % Print message
             if AQN.verbosity >= 1
@@ -469,44 +416,6 @@ else
               
             % Delete data
             AQN.deleteDataSY(AQN.j);
-<<<<<<< HEAD
-                        
-            % Set message
-            msg = 'Agg';
-            
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%  
-%             % Set Rotation
-%             % Set projected then rotated s_j
-%             s_j_rotated = AQN.S(:,AQN.j:end)*AQN.tau_j;
-%             AQN.tau_j = AQN.tau_j * norm(AQN.s_j) / norm(s_j_rotated);
-%             s_j_rotated = s_j_rotated * norm(AQN.s_j) / norm(s_j_rotated);
-%             
-%             % Set rotation matrix
-%             rot_sc1 = -1/(AQN.s_j'*AQN.s_j + AQN.s_j'*s_j_rotated);
-%             rot_sc2 = (1 - (AQN.s_j'*s_j_rotated) * rot_sc1)/(AQN.s_j'*AQN.s_j);
-%             
-%             rot_vec1 = rot_sc1 * AQN.s_j + rot_sc2 * s_j_rotated;
-%             rot_vec2 = (s_j_rotated - AQN.s_j - (AQN.s_j'*AQN.s_j)*rot_vec1)/(AQN.s_j'*s_j_rotated);
-%             % rotation_matrix = rot_vec1 * AQN.s_j' + rot_vec2 * s_j_rotated' + eye(AQN.n);
-%             
-%             % AQN.runUnitTest(6,[],[],[],[],[],[],rotation_matrix,AQN.s_j,AQN.y_j,s_j_rotated);
-%             
-%             % Rotate vectors
-%             AQN.s_j = s_j_rotated;
-%             % AQN.y_j = rotation_matrix * AQN.y_j;  
-%             AQN.y_j = (AQN.s_j' * AQN.y_j) * rot_vec1 + (s_j_rotated' * AQN.y_j) * rot_vec2 + AQN.y_j;
-
-%%%%%%%%%%%%%%%%%%%%%%%
-%             % Only projection
-%             s_j_projection = AQN.S(:,AQN.j:end)*AQN.tau_j;
-%             
-%             if s_j_projection'*AQN.y_j < 1e-6*(s_j_projection'*s_j_projection)
-%                 theta = (1 - 1e-6)*(s_j_projection'*s_j_projection)/(s_j_projection'*s_j_projection - s_j_projection'*AQN.y_j);
-%                 AQN.y_j = theta*AQN.y_j + (1-theta)*s_j_projection;
-%             end
-%             AQN.s_j = s_j_projection;
-=======
->>>>>>> temp-branch
             
             % Check if we do a preconditioning
             if AQN.precondition == 1
