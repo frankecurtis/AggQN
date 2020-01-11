@@ -8,25 +8,25 @@
 %
 % Please cite:
 %
-%   A. Berahas, F. E. Curtis, and B. Zhou, "Limited-Memory BFGS with
-%   Displacement Aggregation: Foundations and Superlinear Convergence Rate
-%   Guarantees," Lehigh ISE/COR@L Technical Report, 2019.
+%   A. Berahas, F. E. Curtis, and B. Zhou. "Limited-Memory BFGS with
+%     Displacement Aggregation." arXiv, 1903.03471. 2019.
 %
 % Constructors:
 %
 %   AQN = AggQN('SY',initWv,initHv,n,m)
-%         where storage mode 'SY'
-%               means initWv is a handle of a function that computes
-%               matrix-vector products with the "initial" inverse Hessian
-%               and initHv is a handle of a function that computes
-%               matrix-vector products with the "initial" Hessian
-%               and the history m must be a positive integer or inf
+%         where storage mode 'SY' means
+%               initWv is a handle of a function that computes
+%                 matrix-vector products with the "initial" inverse Hessian,
+%               initHv is a handle of a function that computes
+%                 matrix-vector products with the "initial" Hessian,
+%               n is the length of s and y vectors, and
+%               m is the history length (for limited memory methods)
 %
 %   AQN = AggQN({'W','H'},M)
-%         where storage mode 'W'
-%               means M is "initial" inverse Hessian
-%         where storage mode 'H'
-%               means M is "initial" Hessian
+%         where storage mode 'W' means
+%               M is "initial" inverse Hessian
+%         where storage mode 'H' means
+%               M is "initial" Hessian
 %
 % Public methods:
 %
@@ -37,9 +37,19 @@
 %       storage mode is 'W' ('H'), then inverse Hessian (Hessian) matrix is
 %       updated using the pair (s,y) as in standard BFGS.  Return value
 %       indicates result of adding pair: 'Add' = pair added, 'Agg' = pair
-%       aggregated, 'Swp' = pair swapped.
+%       aggregated, or 'Swp' = pair swapped.
 %
-%   j = AQN.aggregatedIndex
+%   e = AQN.aggregationCount
+%       Returns counter of aggregations.  If storage mode is 'SY', then
+%       this value is nonnegative;
+%       otherwise, it is -1.
+%
+%   e = AQN.aggregationError
+%       Returns most recent error of aggregation.  If storage mode is
+%       'SY' and an aggregation has occurred, then this value is nonnegative;
+%       otherwise, it is -1.
+%
+%   j = AQN.aggregationIndex
 %       Returns most recent index of aggregated pair.  If storage mode is
 %       'SY' and an aggregation has occurred, then this value is positive;
 %       otherwise, it is -1.
@@ -70,6 +80,9 @@
 %       construct and should be avoided; it would likely be better to
 %       compute Hessian products.
 %
+%   p = AQN.numberOfPairs
+%       Returns number of pairs currently stored.
+%
 %   AQN.printData
 %       Prints all members of the class.
 %
@@ -92,11 +105,15 @@
 %       equal to 0 when debug is set to true, then the verbosity level is
 %       increased to 1.  In non-debug mode, the unit tests are not run.
 %
+%   AQN.setPrecondition(b)
+%       Sets precondition to be b=true (default) or b=false.  Storage mode
+%       must be 'SY' or an error is thrown.  Only affects aggregation mode.
+%
 %   AQN.setVerbosity(level)
 %       Sets verbosity to level, where level must be a nonnegative integer.
-%       Verbosity=0 means that nothing is printed.
-%       Verbosity=1 means that warnings and short messages are printed.
-%       Verbosity=2 means that all data is printed after pair is added.
+%       - verbosity=0 means that nothing is printed.
+%       - verbosity=1 means that warnings and short messages are printed.
+%       - verbosity=2 means that all data is printed after pair is added.
 
 % AggQN class
 classdef AggQN < handle
@@ -115,18 +132,20 @@ classdef AggQN < handle
                          %  true  = # pairs may increase or decrease
                          %  false = # pairs increases up to,
                          %          then remains at m
-    aggregate    = true  % aggregation
-                         %  true  = aggregation on
-                         %  false = aggregation off
+    aggregate    = true  % aggregation mode
     debug        = true  % debug mode
+    precondition = false % preconditioning mode
+    tryNewton    = false % try Newton mode
     verbosity    = 1     % verbosity level
                          %  0 = prints nothing
                          %  1 = prints warnings and short messages
                          %  2 = also prints data after pair added
-    precondition = 0     % precondition level
-                         %  0 = not use preconditioner
-                         %  1 = use preconditioner
     
+    %%%%%%%%%%%%
+    % Counters %
+    %%%%%%%%%%%%
+    count = 0
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % (Inverse) Hessian values %
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -136,7 +155,7 @@ classdef AggQN < handle
     Y = []  % Gradient displacements
     W = []  % Inverse Hessian approximation
     H = []  % Hessian approximation
-
+    
     %%%%%%%%%%%%%%%%%%%%
     % Function handles %
     %%%%%%%%%%%%%%%%%%%%
@@ -146,26 +165,10 @@ classdef AggQN < handle
     %%%%%%%%%%%%%%%%%%%%
     % Auxiliary values %
     %%%%%%%%%%%%%%%%%%%%
-    rho  = []  % Reciprocal of displacement products
-    SY   = []  % S'*Y
+    rho   = [] % Reciprocal of displacement products
+    SY    = [] % S'*Y
                %   where S = [s_earliest ... s_latest]
                %     and Y = [y_earliest ... y_latest]
-    L_SS      = []  % Cholesky factor (lower triangular) of S'*S
-                    %   where S = [s_latest ... s_earliest]
-    L_SS_cond = []  % Cholesky factor (lower triangular) of S_temp'*S_temp
-                    %   where S_temp is temporary S matrix for condition
-                    %   (number) check
-    L_SHS     = []  % Cholesky factor of S'*H*S
-                    %   where H = "initial" Hessian
-                    
-    %%%%%%%%%%%%%%%%%%%%
-    % Temporary values %
-    %%%%%%%%%%%%%%%%%%%%
-    S_temp     = []
-    Y_temp     = []
-    rho_temp   = []
-    SY_temp    = []
-    L_SS_temp  = []
     
     %%%%%%%%%%%%%%%%%%%%%%
     % Aggregation values %
@@ -175,42 +178,32 @@ classdef AggQN < handle
     y_j
     rho_j
     tau_j
+    H_j
+    HS_j
+    SHS_j
+    invM_j
+    Omega_j
+    omega_j
+    rhs_j
+    b_j
     MA_j
     A_j
-    b_j
-    HS_j
-    HQ_j
-    C
-    Q
-    sum_diff = []
-    aggAccuracy = 0
-    startValue
-    checkFlag
-    problem_name = 'null'
-    iter_num = 0
-    DSacc
-    
+    error = 0
     
     %%%%%%%%%%%%%%
     % TOLERANCES %
     %%%%%%%%%%%%%%
-    chol_pert_init = 1e-15
-    cond_tol_1     = 1e+12
-    cond_tol_2     = 1e+6
-    cond_tol_3     = 1e+6
-    cond_tol_beta  = 1e+14
-    %lin_ind_tol    = 1e-08
-    parallel_tol   = 1e-15
-    angle_tol_1    = 1e-6
-    angle_tol_2    = 1e-1
-    accuracy_tol   = 1e-6
-    findiffstep    = 1e-8
-    diff_tol       = 1e-6
-    check_tol      = 1e-4
-    c1             = 1e-8
-    stepsize_limit = 1e-16
-    lambda         = 1e-12
-    maxIter        = 1e+3
+    chol_pert_init   = 1e-15
+    proj_tol         = 1e-08
+    proj_tol_loose   = 1e-01
+    proj_tol_beta    = 1e-08
+    curv_tol         = 1e-04
+    acc_tol          = 1e-06
+    acc_tol_newton   = 1e-06
+    max_iter_newton  = 1e+01
+    c1_newton        = 1e-08
+    alpha_min_newton = 1e-12
+    reg_newton       = 1e-14
     
   end
   
@@ -218,59 +211,47 @@ classdef AggQN < handle
   methods (Access = private)
     
     % Add data, storage mode 'SY'
-    addDataSY(AQN,s,y)
+    addDataSY(AQN,s,y,reason)
+    
+    % Add pair, storage mode 'H'
+    msg = addPairH(AQN,s,y)
     
     % Add pair, storage mode 'SY'
     msg = addPairSY(AQN,s,y)
-
+    
     % Add pair, storage mode 'W'
     msg = addPairW(AQN,s,y)
-
-    % Add pair, storage mode 'H'
-    msg = addPairH(AQN,s,y)
     
     % Cholesky factorization, perturbed when needed
     [L,perturbation] = choleskyPerturb(AQN,M)
     
-    % Compute aggregation values 'A' and 'b'
-    computeAggregationValues(AQN)
+    % Compute error in solving aggregation equations
+    [errorMaxAbs,errorFroSqr,v1,v2] = computeAggregationValuesError(AQN,A_j)
+
+    % Compute remainder of aggregation values using exact method
+    computeAggregationValuesExact(AQN)
     
-    % Compute aggregation values 'A' and 'b' without preconditioners
-    computeAggregationValuesOld(AQN)
+    % Initialize aggregation values
+    computeAggregationValuesInitial(AQN)
+
+    % Compute aggregation values using Newton's method
+    computeAggregationValuesNewton(AQN)
     
-    % Compute aggregation values 'A' and 'b' with Newton's methoda
-    computeAggregationValuesWithNewton(AQN)
+    % Constructor, storage mode 'H'
+    constructorH(AQN,H)
+    
+    % Constructor, storage mode 'SY'
+    constructorSY(AQN,initWv,initHv,n,m)
+    
+    % Constructor, storage mode 'W'
+    constructorW(AQN,W)
     
     % Delete data, storage mode 'SY'
-    deleteDataSY(AQN,s,y)
+    deleteDataSY(AQN,s,y,reason)
     
     % Run unit test
-    runUnitTest(AQN,number,invQ,rhs,level,phi,phi_comb,N,rotation_matrix,s,y,s_rotated)
-    
-    % Run unit test
-    runUnitTestOld(AQN,number,invQ,vec_temp,rhs,level,phi,phi_comb,N)
-    
-    % Cholesky row/column addition
-    R1 = choleskyRowAdd(AQN,R,cv,n)
-    
-    % Cholesky row/column deletion
-    R1 = choleskyRowDel(AQN,R,n)
-    
-    % Map vector to a whole matrix
-    wholeMatrix = mapToMatrix(AQN,vec,width)
-    
-    % Map matrix to a vector
-    vec = mapToVector(AQN,wholeMatrix)
-    
-    % Re-run the test with failure in line search
-    runInDetail(AQN,MA_j,invM,Omega,rhs)
-    
-    % Check whether accuracy reached
-	flag = checkAccuracy(AQN,vec)
-    
-    % Check whether accuracy reached
-	flag = checkAccuracyNewton(AQN,vec)
-        
+    runUnitTest(AQN,number,level,phi,phi_comb,N)
+            
   end
   
   % Methods (public access)
@@ -300,50 +281,28 @@ classdef AggQN < handle
     % Add pair
     msg = addPair(AQN,s,y)
     
+    % Aggregation count
+    function c = aggregationCount(AQN)
+      
+      % Set aggregation count
+      c = AQN.count;
+      
+    end
+    
+    % Aggregation error
+    function e = aggregationError(AQN)
+      
+      % Set aggregation error
+      e = AQN.error;
+      
+    end
+        
     % Aggregated index
-    function j = aggregatedIndex(AQN)
+    function j = aggregationIndex(AQN)
       
       % Set as index of most recently aggregated pair
       j = AQN.j;
       
-    end
-    
-    % Get S and Y pairs information
-    function [S Y] = aggregatedSY(AQN)
-        
-        % Set as current s,y pairs
-        S = AQN.S;
-        Y = AQN.Y;
-        
-    end
-    
-    % Get Aggregation Accuracy
-    function [accuracy] = getAggAccuracy(AQN)
-       
-        % Set as Aggregation Accuracy
-        accuracy = AQN.aggAccuracy;
-        
-    end
-    
-    % Get Tolerance Parameter Value
-    function [TolStr] = getTolParaVal(AQN)
-        
-        % Write Tolerance Values
-        TolStr = strcat(num2str(log10(AQN.cond_tol_1)),num2str(log10(AQN.cond_tol_2)),num2str(log10(AQN.cond_tol_3)),'_',num2str(AQN.angle_tol_1),'_',num2str(AQN.angle_tol_2));
-        
-    end
-    
-    % Get s_j and y_j after rotated
-    function [s_j y_j] = rotatedpair(AQN)
-        
-        % Set as the pair after rotated
-        s_j = AQN.s_j;
-        y_j = AQN.y_j;
-        
-    end
-    
-    function [sum_diff] = get_diff(AQN)
-        sum_diff = AQN.sum_diff;      
     end
     
     % Compute Hessian-vector product (H*v)
@@ -361,13 +320,20 @@ classdef AggQN < handle
     % Number of pairs
     function p = numberOfPairs(AQN)
       
-      % Set as size of S
-      p = size(AQN.S,2);
+      % Return number of pairs if storage mode is 'SY'
+      if strcmp(AQN.storage_mode,'SY') == 1
+        p = size(AQN.S,2);
+      else
+        p = -1;
+      end
       
     end
     
     % Print data (for debugging)
     printData(AQN)
+    
+    % Sets accuracy tolerance
+    setAccuracyTolerance(AQN,value)
     
     % Sets adaptivity
     setAdaptivity(AQN,value)
@@ -378,20 +344,14 @@ classdef AggQN < handle
     % Sets debug
     setDebug(AQN,value)
     
+    % Sets preconditioner level
+    setPrecondition(AQN,value)
+    
+    % Sets tryNewton
+    setTryNewton(AQN,value)
+    
     % Sets verbosity
     setVerbosity(AQN,value)
-    
-    % Sets preconditioner level
-    setPreconditioner(AQN,value)
-    
-    % Sets problem name
-    setProblemName(AQN,value)
-    
-    % Sets iteration number for outer loop
-    setIterNum(AQN,value)
-    
-    % Sets tolerances if needed
-    setTolerance(AQN,tol1,tol2,tol3,tol4,tol5,tol6)
     
   end
   

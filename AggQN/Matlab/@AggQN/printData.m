@@ -14,6 +14,8 @@ fprintf('AggQN: Printing data...\n');
 fprintf('Storage mode = %s\n',AQN.storage_mode);
 fprintf('Adaptivity   = %s\n',mat2str(AQN.adaptive));
 fprintf('Aggregation  = %s\n',mat2str(AQN.aggregate));
+fprintf('Debug        = %s\n',mat2str(AQN.debug));
+fprintf('Precondition = %s\n',mat2str(AQN.precondition));
 fprintf('Verbosity    = %d\n',AQN.verbosity);
 fprintf('History      = %d\n',AQN.m);
 fprintf('Size         = %d\n',AQN.n);
@@ -29,10 +31,6 @@ if strcmp(AQN.storage_mode,'SY') == 1
     disp(AQN.rho);
     fprintf('SY           = \n');
     disp(AQN.SY);
-    fprintf('L_SS         = \n');
-    disp(AQN.L_SS);
-    fprintf('L_SHS        = \n');
-    disp(AQN.L_SHS);
     rho = zeros(size(AQN.S,2),1);
     for i = 1:size(AQN.S,2)
       rho(i) = 1/(AQN.S(:,i)'*AQN.Y(:,i));
@@ -45,12 +43,6 @@ if strcmp(AQN.storage_mode,'SY') == 1
       end
     end
     fprintf('Error in S''*  Y               = %e\n',max(max(abs(AQN.SY - SY))));
-    S_reverse = zeros(size(AQN.S));
-    for i = 1:size(AQN.S,2)
-      S_reverse(:,i) = AQN.S(:,end+1-i);
-    end
-    fprintf('Error in S''*  S factorization = %e\n',max(max(abs(S_reverse'*S_reverse     - AQN.L_SS *AQN.L_SS' ))));
-    fprintf('Error in S''*H*S factorization = %e\n',max(max(abs(AQN.S'*AQN.initHv(AQN.S) - AQN.L_SHS*AQN.L_SHS'))));
   end
 end
 if strcmp(AQN.storage_mode,'W') == 1

@@ -15,12 +15,12 @@ if length(value) ~= 1 || ~islogical(value)
 end
 
 % Check if input is valid
-if strcmp(AQN.storage_mode,'SY') ~= 1 && AQN.adaptive == true
+if strcmp(AQN.storage_mode,'SY') ~= 1
   error('AggQN: Adaptivity incompatible with storage mode.  For adaptivity, storage mode needs to be SY.');
 end
 
 % Check if pairs have been initialized
-if strcmp(AQN.storage_mode,'SY') == 1 && ~isempty(AQN.S) && AQN.adaptive ~= value
+if strcmp(AQN.storage_mode,'SY') == 1 && ~isempty(AQN.S)
   error('AggQN: Adaptivity cannot be changed after a pair has already been added.');
 end
 
