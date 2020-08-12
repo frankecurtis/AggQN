@@ -11,7 +11,11 @@ function [errorMaxAbs,errorFroSqr,v1,v2] = computeAggregationValuesError(AQN,A_j
 
 % Compute Ytilde
 Ytilde = AQN.Y;
-Ytilde(:,AQN.j:end-1) = AQN.Y(:,AQN.j:end-1) + AQN.H_j*AQN.S(:,AQN.j:end)*A_j + AQN.y_j*AQN.b_j';
+if AQN.j == 1
+  Ytilde(:,AQN.j:end-1) = AQN.Y(:,AQN.j:end-1) + AQN.initHv(AQN.S(:,AQN.j:end)*A_j) + AQN.y_j*AQN.b_j';
+else
+  Ytilde(:,AQN.j:end-1) = AQN.Y(:,AQN.j:end-1) + AQN.H_j*AQN.S(:,AQN.j:end)*A_j + AQN.y_j*AQN.b_j';
+end
 
 % Compute "full" b
 b = [zeros(AQN.j-1,1); AQN.b_j; 0];
@@ -20,24 +24,42 @@ b = [zeros(AQN.j-1,1); AQN.b_j; 0];
 A = [A_j zeros(size(AQN.S(:,AQN.j:end),2),1)];
 
 % Construct matrices
-matrix1 = triu(AQN.SY(AQN.j:end,AQN.j:end)) - triu(AQN.S(:,AQN.j:end)'*Ytilde(:,AQN.j:end));
-matrix2 = b(AQN.j:end) + AQN.rho_j*tril(AQN.SY(AQN.j:end,AQN.j:end),-1)'*AQN.tau_j;
-matrix3 = (Ytilde(:,AQN.j:end) - AQN.Y(:,AQN.j:end))'*inv(AQN.H_j)*(Ytilde(:,AQN.j:end)-AQN.Y(:,AQN.j:end)) - ...
-          (1+AQN.rho_j*AQN.y_j'*inv(AQN.H_j)*AQN.y_j)/AQN.rho_j * (b(AQN.j:end)*b(AQN.j:end)') + ...
-          A'*tril(AQN.SY(AQN.j:end,AQN.j:end),-1) + tril(AQN.SY(AQN.j:end,AQN.j:end),-1)'*A;
-
-% Set vectors for Newton's method
-v1 = [];
-for i = 1:size(AQN.Y,2)-AQN.j
-  v1 = [v1 ; AQN.SHS_j(1:i,:)*A_j(:,i) + AQN.b_j(i)*AQN.S(:,1:i)'*AQN.y_j];
+if AQN.j == 1
+  matrix1 = triu(AQN.SY(AQN.j:end,AQN.j:end)) - triu(AQN.S(:,AQN.j:end)'*Ytilde(:,AQN.j:end));
+  matrix2 = b(AQN.j:end) + AQN.rho_j*tril(AQN.SY(AQN.j:end,AQN.j:end),-1)'*AQN.tau_j;
+  matrix3 = (Ytilde(:,AQN.j:end) - AQN.Y(:,AQN.j:end))'*AQN.initWv((Ytilde(:,AQN.j:end)-AQN.Y(:,AQN.j:end))) - ...
+    (1+AQN.rho_j*AQN.y_j'*AQN.initWv(AQN.y_j))/AQN.rho_j * (b(AQN.j:end)*b(AQN.j:end)') + ...
+    A'*tril(AQN.SY(AQN.j:end,AQN.j:end),-1) + tril(AQN.SY(AQN.j:end,AQN.j:end),-1)'*A;
+else
+  matrix1 = triu(AQN.SY(AQN.j:end,AQN.j:end)) - triu(AQN.S(:,AQN.j:end)'*Ytilde(:,AQN.j:end));
+  matrix2 = b(AQN.j:end) + AQN.rho_j*tril(AQN.SY(AQN.j:end,AQN.j:end),-1)'*AQN.tau_j;
+  matrix3 = (Ytilde(:,AQN.j:end) - AQN.Y(:,AQN.j:end))'*(AQN.H_j\(Ytilde(:,AQN.j:end)-AQN.Y(:,AQN.j:end))) - ...
+    (1+AQN.rho_j*AQN.y_j'*(AQN.H_j\AQN.y_j))/AQN.rho_j * (b(AQN.j:end)*b(AQN.j:end)') + ...
+    A'*tril(AQN.SY(AQN.j:end,AQN.j:end),-1) + tril(AQN.SY(AQN.j:end,AQN.j:end),-1)'*A;
 end
 
-% Second: vectorize the lower part of the difference matrix
-M  = A_j'*AQN.SHS_j*A_j + AQN.Omega_j'*A_j + A_j'*AQN.Omega_j - AQN.omega_j*AQN.omega_j';
-v2 = zeros(size(M,1)*(size(M,1) + 1)/2,1);
-j  = 1;
-for i = 1:size(M,1)
-  v2(j:j+i-1) = M(i,1:i)'; j = j+i;
+% Check if trying Newton
+if AQN.tryNewton
+  
+  % Set vectors for Newton's method
+  v1 = [];
+  for i = 1:size(AQN.Y,2)-AQN.j
+    v1 = [v1 ; AQN.SHS_j(1:i,:)*A_j(:,i) + AQN.b_j(i)*AQN.S(:,1:i)'*AQN.y_j];
+  end
+  
+  % Second: vectorize the lower part of the difference matrix
+  M  = A_j'*AQN.SHS_j*A_j + AQN.Omega_j'*A_j + A_j'*AQN.Omega_j - AQN.omega_j*AQN.omega_j';
+  v2 = zeros(size(M,1)*(size(M,1) + 1)/2,1);
+  j  = 1;
+  for i = 1:size(M,1)
+    v2(j:j+i-1) = M(i,1:i)'; j = j+i;
+  end
+  
+else
+  
+  % Empty return values
+  v1 = []; v2 = [];
+  
 end
 
 % Set errors

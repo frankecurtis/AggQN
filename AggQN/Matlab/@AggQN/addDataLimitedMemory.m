@@ -6,7 +6,7 @@
 %
 % Method definition for AggQN class
 
-function addDataSY(AQN,s,y,reason)
+function addDataLimitedMemory(AQN,s,y,reason)
 
 % Add to S*Y matrix
 if size(AQN.S,2) >= 1

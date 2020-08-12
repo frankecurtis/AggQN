@@ -6,7 +6,7 @@
 %
 % Method definition for AggQN class
 
-function deleteDataSY(AQN,index,reason)
+function deleteDataLimitedMemory(AQN,index,reason)
 
 % Delete pair
 AQN.SY(:,index) = [];

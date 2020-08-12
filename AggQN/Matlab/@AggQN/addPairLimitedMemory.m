@@ -6,8 +6,8 @@
 %
 % Method definition for AggQN class
 
-% Add pair, storage mode 'SY'
-function msg = addPairSY(AQN,s,y)
+% Add pair, storage mode 'limitedMemory'
+function msg = addPairLimitedMemory(AQN,s,y)
 
 % Check aggregation option
 if ~AQN.aggregate
@@ -17,7 +17,7 @@ if ~AQN.aggregate
   %%%%%%%%%%%%%%%%%%
   
   % Add data
-  AQN.addDataSY(s,y,'aggregation is off');
+  AQN.addDataLimitedMemory(s,y,'aggregation is off');
   
   % Set message
   msg = 'Add';
@@ -26,7 +26,7 @@ if ~AQN.aggregate
   if size(AQN.S,2) > AQN.m
     
     % Delete data
-    AQN.deleteDataSY(1,'history limit reached');
+    AQN.deleteDataLimitedMemory(1,'history limit reached');
     
     % Update message
     msg = 'Swp';
@@ -47,7 +47,7 @@ else
     %%%%%%%%%%%%%%%%
     
     % Add data
-    AQN.addDataSY(s,y,'first pair');
+    AQN.addDataLimitedMemory(s,y,'first pair');
     
     % Set message
     msg = 'Add';
@@ -59,7 +59,7 @@ else
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % Add data
-    AQN.addDataSY(s,y,'aggregation is on');
+    AQN.addDataLimitedMemory(s,y,'aggregation is on');
     
     % Set message
     msg = 'Add';
@@ -96,7 +96,7 @@ else
         AQN.tau_j = tau;
         
         % Delete data
-        AQN.deleteDataSY(AQN.j,'trying aggregation');
+        AQN.deleteDataLimitedMemory(AQN.j,'trying aggregation');
         
         % Check if parallel to last
         if AQN.j == size(AQN.S,2)
@@ -125,7 +125,9 @@ else
             AQN.error = errorMaxAbs;
             
             % Set new Y
-            AQN.Y(:,AQN.j:end-1) = AQN.Y(:,AQN.j:end-1) + AQN.HS_j*AQN.A_j + AQN.y_j*AQN.b_j';
+            if ~AQN.onlySwap
+              AQN.Y(:,AQN.j:end-1) = AQN.Y(:,AQN.j:end-1) + AQN.HS_j*AQN.A_j + AQN.y_j*AQN.b_j';
+            end
             
             % Update S'*Y
             AQN.SY(:,AQN.j:end-1) = AQN.S'*AQN.Y(:,AQN.j:end-1);
@@ -156,7 +158,9 @@ else
               AQN.error = errorMaxAbs;
               
               % Set new Y
-              AQN.Y(:,AQN.j:end-1) = AQN.Y(:,AQN.j:end-1) + AQN.HS_j*AQN.A_j + AQN.y_j*AQN.b_j';
+              if ~AQN.onlySwap
+                AQN.Y(:,AQN.j:end-1) = AQN.Y(:,AQN.j:end-1) + AQN.HS_j*AQN.A_j + AQN.y_j*AQN.b_j';
+              end
               
               % Update S'*Y
               AQN.SY(:,AQN.j:end-1) = AQN.S'*AQN.Y(:,AQN.j:end-1);
@@ -194,7 +198,7 @@ else
     if size(AQN.S,2) > AQN.m
       
       % Delete data
-      AQN.deleteDataSY(1,'history limit reached');
+      AQN.deleteDataLimitedMemory(1,'history limit reached');
       
       % Update message
       msg = 'Swp';

@@ -20,20 +20,20 @@ if length(size(s)) ~= 2     || ...
 end
 
 % Check storage mode
-if strcmp(AQN.storage_mode,'SY') == 1
+if strcmp(AQN.storage_mode,'limitedMemory') == 1
   
   % Add pair
-  msg = AQN.addPairSY(s,y);
+  msg = AQN.addPairLimitedMemory(s,y);
   
-elseif strcmp(AQN.storage_mode,'W') == 1
-  
-  % Add pair
-  msg = AQN.addPairW(s,y);
-  
-else % strcmp(AQN.storage_mode,'H') == 1
+elseif strcmp(AQN.storage_mode,'denseInverseHessian') == 1
   
   % Add pair
-  msg = AQN.addPairH(s,y);
+  msg = AQN.addPairDenseInverseHessian(s,y);
+  
+else % strcmp(AQN.storage_mode,'denseHessian') == 1
+  
+  % Add pair
+  msg = AQN.addPairDenseHessian(s,y);
   
 end
 

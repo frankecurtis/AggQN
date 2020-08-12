@@ -6,8 +6,8 @@
 %
 % Method definition for AggQN class
 
-% Add pair, storage mode 'H'
-function msg = addPairH(AQN,s,y)
+% Add pair, storage mode 'denseHessian'
+function msg = addPairDenseHessian(AQN,s,y)
 
 % Compute inner product
 r = 1/(s'*y);

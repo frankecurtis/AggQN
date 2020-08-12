@@ -10,7 +10,7 @@
 function W = inverseHessian(AQN)
 
 % Check storage mode
-if strcmp(AQN.storage_mode,'SY') == 1
+if strcmp(AQN.storage_mode,'limitedMemory') == 1
   
   % TO DO: Make more efficient in terms of storage and computational costs
   
@@ -45,20 +45,20 @@ if strcmp(AQN.storage_mode,'SY') == 1
   end
   
   % Print message
-  warning('AggQN: Constructing inverse Hessian for storage mode ''SY'' is inefficient!  Consider computing inverse-Hessian-products instead.');
+  warning('AggQN: Constructing inverse Hessian for storage mode ''limitedMemory'' is inefficient!  Consider computing inverse-Hessian-products instead.');
   
-elseif strcmp(AQN.storage_mode,'W') == 1
-  
-  % Set return value
-  W = (AQN.W + AQN.W')/2;
-  
-else % strcmo(AQN.storage_mode,'H') == 1
+elseif strcmp(AQN.storage_mode,'denseInverseHessian') == 1
   
   % Set return value
-  W = inv((AQN.H + AQN.H')/2);
+  W = AQN.W;
+  
+else % strcmp(AQN.storage_mode,'denseHessian') == 1
+  
+  % Set return value
+  W = inv(AQN.H);
   
   % Print message
-  warning('AggQN: Constructing inverse Hessian for storage mode ''H'' is inefficient and inaccurate!');
+  warning('AggQN: Constructing inverse Hessian for storage mode ''denseHessian'' is inefficient and inaccurate!');
   
 end
 

@@ -10,7 +10,7 @@
 function Wv = computeInverseHessianProduct(AQN,v)
 
 % Check option
-if strcmp(AQN.storage_mode,'SY') == 1
+if strcmp(AQN.storage_mode,'limitedMemory') == 1
   
   % Check if pairs exist
   if size(AQN.S,2) == 0
@@ -36,7 +36,7 @@ if strcmp(AQN.storage_mode,'SY') == 1
     fprintf('AggQN: Computed inverse-Hessian-vector product by two-loop recursion.\n');
   end
   
-elseif strcmp(AQN.storage_mode,'W') == 1
+elseif strcmp(AQN.storage_mode,'denseInverseHessian') == 1
   
   % Compute product
   Wv = AQN.W*v;
@@ -46,14 +46,14 @@ elseif strcmp(AQN.storage_mode,'W') == 1
     fprintf('AggQN: Computed inverse-Hessian-vector product.\n');
   end
   
-else % strcmp(AQN.storage_mode,'H') == 1
+else % strcmp(AQN.storage_mode,'denseHessian') == 1
   
   % Solve system
   Wv = AQN.H\v;
   
   % Print message
   if AQN.verbosity >= 1
-    fprintf('AggQN: Computed inverse-Hessian-vector product.  Inefficient since storage mode is ''H''.\n');
+    fprintf('AggQN: Computed inverse-Hessian-vector product.  Inefficient since storage mode is ''denseHessian''.\n');
   end
   
 end

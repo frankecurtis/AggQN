@@ -12,16 +12,16 @@ function printData(AQN)
 % Print scalar data
 fprintf('AggQN: Printing data...\n');
 fprintf('Storage mode = %s\n',AQN.storage_mode);
-fprintf('Adaptivity   = %s\n',mat2str(AQN.adaptive));
 fprintf('Aggregation  = %s\n',mat2str(AQN.aggregate));
 fprintf('Debug        = %s\n',mat2str(AQN.debug));
-fprintf('Precondition = %s\n',mat2str(AQN.precondition));
+fprintf('OnlySwap     = %s\n',mat2str(AQN.onlySwap));
+fprintf('TryNewton    = %s\n',mat2str(AQN.tryNewton));
 fprintf('Verbosity    = %d\n',AQN.verbosity);
 fprintf('History      = %d\n',AQN.m);
 fprintf('Size         = %d\n',AQN.n);
 
 % Print (inverse) Hessian data
-if strcmp(AQN.storage_mode,'SY') == 1
+if strcmp(AQN.storage_mode,'limitedMemory') == 1
   if size(AQN.S,2) >= 1
     fprintf('S            = \n');
     disp(AQN.S);
@@ -45,11 +45,11 @@ if strcmp(AQN.storage_mode,'SY') == 1
     fprintf('Error in S''*  Y               = %e\n',max(max(abs(AQN.SY - SY))));
   end
 end
-if strcmp(AQN.storage_mode,'W') == 1
+if strcmp(AQN.storage_mode,'denseInverseHessian') == 1
   fprintf('W            = \n');
   disp(AQN.W);
 end
-if strcmp(AQN.storage_mode,'H') == 1
+if strcmp(AQN.storage_mode,'denseHessian') == 1
   fprintf('H            = \n');
   disp(AQN.H);
 end

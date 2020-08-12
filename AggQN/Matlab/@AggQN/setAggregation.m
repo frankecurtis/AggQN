@@ -15,12 +15,12 @@ if length(value) ~= 1 || ~islogical(value)
 end
 
 % Check if input is valid
-if strcmp(AQN.storage_mode,'SY') ~= 1
-  error('AggQN: Aggregation incompatible with storage mode.  For aggregation, storage mode needs to be SY.');
+if strcmp(AQN.storage_mode,'limitedMemory') ~= 1
+  error('AggQN: Aggregation incompatible with storage mode.  For aggregation, storage mode needs to be ''limitedMemory''.');
 end
 
 % Check if pairs have been initialized
-if strcmp(AQN.storage_mode,'SY') == 1 && ~isempty(AQN.S)
+if strcmp(AQN.storage_mode,'limitedMemory') == 1 && ~isempty(AQN.S)
   error('AggQN: Aggregation cannot be changed after a pair has already been added.');
 end
 
