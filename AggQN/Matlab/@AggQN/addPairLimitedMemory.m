@@ -87,6 +87,11 @@ else
         Y_temp   = AQN.Y;
         rho_temp = AQN.rho;
         SY_temp  = AQN.SY;
+        R_temp   = AQN.R;
+        D_temp   = AQN.D;
+        L_temp   = AQN.L;
+        HS_temp  = AQN.HS;
+        SHS_temp = AQN.SHS;
         
         % Set aggregation values
         AQN.j     = index;
@@ -124,20 +129,33 @@ else
             % Save error
             AQN.error = errorMaxAbs;
             
-            % Set new Y
+            % Check if only swap
             if ~AQN.onlySwap
+              
+              % Set new Y
               AQN.Y(:,AQN.j:end-1) = AQN.Y(:,AQN.j:end-1) + AQN.HS_j*AQN.A_j + AQN.y_j*AQN.b_j';
+              
+              % Update S'*Y
+              AQN.SY(:,AQN.j:end-1) = AQN.S'*AQN.Y(:,AQN.j:end-1);
+              
+              % Update compact form matrices
+              AQN.R = triu(AQN.SY);
+              AQN.D = diag(diag(AQN.SY));
+              AQN.L = tril(AQN.SY,-1);
+              
+              % Set message
+              msg = 'Agg';
+            
+              % Increment aggrecation counter
+              AQN.count = AQN.count + 1;
+            
+            else
+              
+              % Set message
+              msg = 'Swp';
+              
             end
-            
-            % Update S'*Y
-            AQN.SY(:,AQN.j:end-1) = AQN.S'*AQN.Y(:,AQN.j:end-1);
-            
-            % Set message
-            msg = 'Agg';
-            
-            % Increment aggrecation counter
-            AQN.count = AQN.count + 1;
-            
+                        
           else
             
             % Try Newton?
@@ -157,19 +175,32 @@ else
               % Save error
               AQN.error = errorMaxAbs;
               
-              % Set new Y
+              % Check if only swap
               if ~AQN.onlySwap
+                
+                % Set new Y
                 AQN.Y(:,AQN.j:end-1) = AQN.Y(:,AQN.j:end-1) + AQN.HS_j*AQN.A_j + AQN.y_j*AQN.b_j';
+                
+                % Update S'*Y
+                AQN.SY(:,AQN.j:end-1) = AQN.S'*AQN.Y(:,AQN.j:end-1);
+
+                % Update compact form matrices
+                AQN.R = triu(AQN.SY);
+                AQN.D = diag(diag(AQN.SY));
+                AQN.L = tril(AQN.SY,-1);
+
+                % Set message
+                msg = 'AgN';
+              
+                % Increment aggrecation counter
+                AQN.count = AQN.count + 1;
+              
+              else
+                
+                % Set message
+                msg = 'Swp';
+                
               end
-              
-              % Update S'*Y
-              AQN.SY(:,AQN.j:end-1) = AQN.S'*AQN.Y(:,AQN.j:end-1);
-              
-              % Set message
-              msg = 'AgN';
-              
-              % Increment aggrecation counter
-              AQN.count = AQN.count + 1;
               
             else
               
@@ -178,6 +209,11 @@ else
               AQN.Y   = Y_temp;
               AQN.rho = rho_temp;
               AQN.SY  = SY_temp;
+              AQN.R   = R_temp;
+              AQN.D   = D_temp;
+              AQN.L   = L_temp;
+              AQN.HS  = HS_temp;
+              AQN.SHS = SHS_temp;
               
             end
             

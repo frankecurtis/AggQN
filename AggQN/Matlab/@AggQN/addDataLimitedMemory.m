@@ -8,11 +8,22 @@
 
 function addDataLimitedMemory(AQN,s,y,reason)
 
-% Add to S*Y matrix
+% Add to compact form matrices
 if size(AQN.S,2) >= 1
-  AQN.SY = [AQN.SY (y'*AQN.S)'; s'*AQN.Y s'*y];
+  AQN.SY  = [AQN.SY (y'*AQN.S)'; s'*AQN.Y s'*y];
+  AQN.R   = triu(AQN.SY);
+  AQN.D   = diag(diag(AQN.SY));
+  AQN.L   = tril(AQN.SY,-1);
+  AQN.HS  = [AQN.HS AQN.initHv(s)];
+  SHs     = (s'*AQN.HS(:,1:end-1))';
+  AQN.SHS = [AQN.SHS SHs; SHs' s'*AQN.HS(:,end)];
 else
-  AQN.SY = s'*y;
+  AQN.SY  = s'*y;
+  AQN.R   = AQN.SY;
+  AQN.D   = AQN.SY;
+  AQN.L   = 0;
+  AQN.HS  = AQN.initHv(s);
+  AQN.SHS = s'*AQN.HS;
 end
 
 % Add to S and Y

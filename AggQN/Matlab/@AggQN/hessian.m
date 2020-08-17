@@ -12,9 +12,13 @@ function H = hessian(AQN)
 % Check storage mode
 if strcmp(AQN.storage_mode,'limitedMemory') == 1
 
-  % Set return value
-  H = inv(AQN.inverseHessian);
-  
+  % Set return value (using compact form)
+  if size(AQN.S,2) >= 1
+    H = AQN.initHv(eye(AQN.n)) - [AQN.HS AQN.Y]*([AQN.SHS AQN.L; AQN.L' -AQN.D]\[AQN.HS'; AQN.Y']);
+  else
+    H = AQN.initHv(eye(AQN.n));
+  end
+
   % Print message
   warning('AggQN: Constructing Hessian for storage mode ''limitedMemory'' is inefficient and inaccurate!');
   

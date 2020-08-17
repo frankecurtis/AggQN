@@ -11,11 +11,7 @@ function [errorMaxAbs,errorFroSqr,v1,v2] = computeAggregationValuesError(AQN,A_j
 
 % Compute Ytilde
 Ytilde = AQN.Y;
-if AQN.j == 1
-  Ytilde(:,AQN.j:end-1) = AQN.Y(:,AQN.j:end-1) + AQN.initHv(AQN.S(:,AQN.j:end)*A_j) + AQN.y_j*AQN.b_j';
-else
-  Ytilde(:,AQN.j:end-1) = AQN.Y(:,AQN.j:end-1) + AQN.H_j*AQN.S(:,AQN.j:end)*A_j + AQN.y_j*AQN.b_j';
-end
+Ytilde(:,AQN.j:end-1) = AQN.Y(:,AQN.j:end-1) + AQN.computeInnerHessianProduct(AQN.S(:,AQN.j:end)*A_j) + AQN.y_j*AQN.b_j';
 
 % Compute "full" b
 b = [zeros(AQN.j-1,1); AQN.b_j; 0];
@@ -24,19 +20,11 @@ b = [zeros(AQN.j-1,1); AQN.b_j; 0];
 A = [A_j zeros(size(AQN.S(:,AQN.j:end),2),1)];
 
 % Construct matrices
-if AQN.j == 1
-  matrix1 = triu(AQN.SY(AQN.j:end,AQN.j:end)) - triu(AQN.S(:,AQN.j:end)'*Ytilde(:,AQN.j:end));
-  matrix2 = b(AQN.j:end) + AQN.rho_j*tril(AQN.SY(AQN.j:end,AQN.j:end),-1)'*AQN.tau_j;
-  matrix3 = (Ytilde(:,AQN.j:end) - AQN.Y(:,AQN.j:end))'*AQN.initWv((Ytilde(:,AQN.j:end)-AQN.Y(:,AQN.j:end))) - ...
-    (1+AQN.rho_j*AQN.y_j'*AQN.initWv(AQN.y_j))/AQN.rho_j * (b(AQN.j:end)*b(AQN.j:end)') + ...
-    A'*tril(AQN.SY(AQN.j:end,AQN.j:end),-1) + tril(AQN.SY(AQN.j:end,AQN.j:end),-1)'*A;
-else
-  matrix1 = triu(AQN.SY(AQN.j:end,AQN.j:end)) - triu(AQN.S(:,AQN.j:end)'*Ytilde(:,AQN.j:end));
-  matrix2 = b(AQN.j:end) + AQN.rho_j*tril(AQN.SY(AQN.j:end,AQN.j:end),-1)'*AQN.tau_j;
-  matrix3 = (Ytilde(:,AQN.j:end) - AQN.Y(:,AQN.j:end))'*(AQN.H_j\(Ytilde(:,AQN.j:end)-AQN.Y(:,AQN.j:end))) - ...
-    (1+AQN.rho_j*AQN.y_j'*(AQN.H_j\AQN.y_j))/AQN.rho_j * (b(AQN.j:end)*b(AQN.j:end)') + ...
-    A'*tril(AQN.SY(AQN.j:end,AQN.j:end),-1) + tril(AQN.SY(AQN.j:end,AQN.j:end),-1)'*A;
-end
+matrix1 = triu(AQN.SY(AQN.j:end,AQN.j:end)) - triu(AQN.S(:,AQN.j:end)'*Ytilde(:,AQN.j:end));
+matrix2 = b(AQN.j:end) + AQN.rho_j*tril(AQN.SY(AQN.j:end,AQN.j:end),-1)'*AQN.tau_j;
+matrix3 = (Ytilde(:,AQN.j:end) - AQN.Y(:,AQN.j:end))'*AQN.computeInnerInverseHessianProduct(Ytilde(:,AQN.j:end)-AQN.Y(:,AQN.j:end)) - ...
+  (1+AQN.rho_j*AQN.y_j'*AQN.computeInnerInverseHessianProduct(AQN.y_j))/AQN.rho_j * (b(AQN.j:end)*b(AQN.j:end)') + ...
+  A'*tril(AQN.SY(AQN.j:end,AQN.j:end),-1) + tril(AQN.SY(AQN.j:end,AQN.j:end),-1)'*A;
 
 % Check if trying Newton
 if AQN.tryNewton

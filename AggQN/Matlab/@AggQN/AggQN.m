@@ -174,10 +174,15 @@ classdef AggQN < handle
     %%%%%%%%%%%%%%%%%%%%
     % Auxiliary values %
     %%%%%%%%%%%%%%%%%%%%
-    rho   = [] % Reciprocal of displacement products
-    SY    = [] % S'*Y
-               %   where S = [s_earliest ... s_latest]
-               %     and Y = [y_earliest ... y_latest]
+    rho = [] % Reciprocal of displacement products
+    SY  = [] % S'*Y
+             %   where S = [s_earliest ... s_latest]
+             %     and Y = [y_earliest ... y_latest]
+    R   = [] % Compact form matrix; see Byrd, Nocedal, and Schnabel (1994)
+    D   = [] % Compact form matrix; see Byrd, Nocedal, and Schnabel (1994)
+    L   = [] % Compact form matrix; see Byrd, Nocedal, and Schnabel (1994)
+    HS  = [] % initHv(S)
+    SHS = [] % S'*initHv(S)
     
     %%%%%%%%%%%%%%%%%%%%%%
     % Aggregation values %
@@ -187,7 +192,6 @@ classdef AggQN < handle
     y_j
     rho_j
     tau_j
-    H_j
     HS_j
     SHS_j
     invM_j
@@ -204,7 +208,7 @@ classdef AggQN < handle
     %%%%%%%%%%%%%%
     chol_pert_init   = 1e-15
     proj_tol         = 1e-08
-    proj_tol_loose   = 1e-01
+    proj_tol_loose   = 1e-04
     proj_tol_beta    = 1e-08
     curv_tol         = 1e-04
     acc_tol          = 1e-06
@@ -245,6 +249,12 @@ classdef AggQN < handle
 
     % Compute aggregation values using Newton's method
     computeAggregationValuesNewton(AQN)
+    
+    % Compute inner Hessian product for aggregation
+    Hjv = computeInnerHessianProduct(AQN,v)
+    
+    % Compute inner inverse Hessian product for aggregation
+    Wjv = computeInnerInverseHessianProduct(AQN,v)
     
     % Constructor, storage mode 'denseHessian'
     constructorDenseHessian(AQN,H)

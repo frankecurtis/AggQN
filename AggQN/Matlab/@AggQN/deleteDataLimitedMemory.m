@@ -9,11 +9,20 @@
 function deleteDataLimitedMemory(AQN,index,reason)
 
 % Delete pair
-AQN.SY(:,index) = [];
-AQN.SY(index,:) = [];
-AQN.S(:,index)  = [];
-AQN.Y(:,index)  = [];
-AQN.rho(index)  = [];
+AQN.SY(:,index)  = [];
+AQN.SY(index,:)  = [];
+AQN.R(:,index)   = [];
+AQN.R(index,:)   = [];
+AQN.D(:,index)   = [];
+AQN.D(index,:)   = [];
+AQN.L(:,index)   = [];
+AQN.L(index,:)   = [];
+AQN.HS(:,index)  = [];
+AQN.SHS(:,index) = [];
+AQN.SHS(index,:) = [];
+AQN.S(:,index)   = [];
+AQN.Y(:,index)   = [];
+AQN.rho(index)   = [];
 
 % Print message
 if AQN.verbosity >= 1

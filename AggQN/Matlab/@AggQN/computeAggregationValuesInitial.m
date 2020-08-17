@@ -9,29 +9,8 @@
 % Compute 'b', "upper" part of 'A', 'Omega', 'omega', 'rhs' values, and auxiliary values
 function computeAggregationValuesInitial(AQN)
 
-% No need to construct initial Hessian if removing oldest pair
-if AQN.j == 1
-  
-  % Set HS (H itself not needed)
-  AQN.HS_j = AQN.initHv(AQN.S(:,AQN.j:end));
-  
-else
-  
-  % Construct H_{1:j-1} as AQN_H.hessian
-  H_matr = AQN.initHv(eye(AQN.n));
-  AQN_H  = AggQN('denseHessian',H_matr);
-  AQN_H.setVerbosity(0);
-  for i = 1:AQN.j-1
-    AQN_H.addPair(AQN.S(:,i),AQN.Y(:,i));
-  end
-  
-  % Construct H_j
-  AQN.H_j = AQN_H.hessian;
-  
-  % Construct HS_j
-  AQN.HS_j = AQN_H.hessian*AQN.S(:,AQN.j:end);
-  
-end
+% Construct HS_j
+AQN.HS_j = AQN.computeInnerHessianProduct(AQN.S(:,AQN.j:end));  
 
 % Construct SHS_j
 AQN.SHS_j = AQN.S(:,AQN.j:end)'*AQN.HS_j;
