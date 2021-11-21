@@ -1,4 +1,4 @@
-function run_algorithm(algorithm,history)
+function runAlgorithm(algorithm,history)
 
 % Authors     : Albert Berahas, Frank E. Curtis, Baoyu Zhou
 % Description : Runs algorithm to solve problem

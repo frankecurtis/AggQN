@@ -1,4 +1,4 @@
-function run_algorithms
+function testAggBFGS
 
 % Authors     : Albert Berahas, Frank E. Curtis, Baoyu Zhou
 % Description : Runs algorithms
@@ -17,7 +17,7 @@ for j = 1:length(algorithms)
   if strcmp(algorithms{j},'BFGS') == 1
 
     % Run algorithm
-    run_algorithm(algorithms{j},inf);
+    runAlgorithm(algorithms{j},inf);
 
   else
 
@@ -25,7 +25,7 @@ for j = 1:length(algorithms)
     for k = 1:length(histories)
 
       % Run algorithm
-      run_algorithm(algorithms{j},histories(k));
+      runAlgorithm(algorithms{j},histories(k));
 
     end
 
