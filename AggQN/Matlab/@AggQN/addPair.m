@@ -1,4 +1,4 @@
-% Copyright (C) 2019 Albert Berahas, Frank E. Curtis, Baoyu Zhou
+% Copyright (C) 2021 Albert Berahas, Frank E. Curtis, Baoyu Zhou
 %
 % All Rights Reserved.
 %
@@ -21,20 +21,20 @@ end
 
 % Check storage mode
 if strcmp(AQN.storage_mode,'limitedMemory') == 1
-  
+
   % Add pair
   msg = AQN.addPairLimitedMemory(s,y);
-  
+
 elseif strcmp(AQN.storage_mode,'denseInverseHessian') == 1
-  
+
   % Add pair
   msg = AQN.addPairDenseInverseHessian(s,y);
-  
+
 else % strcmp(AQN.storage_mode,'denseHessian') == 1
-  
+
   % Add pair
   msg = AQN.addPairDenseHessian(s,y);
-  
+
 end
 
 % Check verbosity

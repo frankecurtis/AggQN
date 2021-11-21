@@ -1,4 +1,4 @@
-% Copyright (C) 2019 Albert Berahas, Frank E. Curtis, Baoyu Zhou
+% Copyright (C) 2021 Albert Berahas, Frank E. Curtis, Baoyu Zhou
 %
 % All Rights Reserved.
 %
@@ -28,13 +28,13 @@ matrix3 = (Ytilde(:,AQN.j:end) - AQN.Y(:,AQN.j:end))'*AQN.computeInnerInverseHes
 
 % Check if trying Newton
 if AQN.tryNewton
-  
+
   % Set vectors for Newton's method
   v1 = [];
   for i = 1:size(AQN.Y,2)-AQN.j
     v1 = [v1 ; AQN.SHS_j(1:i,:)*A_j(:,i) + AQN.b_j(i)*AQN.S(:,1:i)'*AQN.y_j];
   end
-  
+
   % Second: vectorize the lower part of the difference matrix
   M  = A_j'*AQN.SHS_j*A_j + AQN.Omega_j'*A_j + A_j'*AQN.Omega_j - AQN.omega_j*AQN.omega_j';
   v2 = zeros(size(M,1)*(size(M,1) + 1)/2,1);
@@ -42,12 +42,12 @@ if AQN.tryNewton
   for i = 1:size(M,1)
     v2(j:j+i-1) = M(i,1:i)'; j = j+i;
   end
-  
+
 else
-  
+
   % Empty return values
   v1 = []; v2 = [];
-  
+
 end
 
 % Set errors

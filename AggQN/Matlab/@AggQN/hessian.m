@@ -1,4 +1,4 @@
-% Copyright (C) 2019 Albert Berahas, Frank E. Curtis, Baoyu Zhou
+% Copyright (C) 2021 Albert Berahas, Frank E. Curtis, Baoyu Zhou
 %
 % All Rights Reserved.
 %
@@ -21,20 +21,20 @@ if strcmp(AQN.storage_mode,'limitedMemory') == 1
 
   % Print message
   warning('AggQN: Constructing Hessian for storage mode ''limitedMemory'' is inefficient and inaccurate!');
-  
+
 elseif strcmp(AQN.storage_mode,'denseInverseHessian') == 1
-  
+
   % Set return value
   H = inv(AQN.W);
-  
+
   % Print message
   warning('AggQN: Constructing Hessian for storage mode ''denseInverseHessian'' is inefficient and inaccurate!');
-  
+
 else % strcmp(AQN.storage_mode,'denseHessian') == 1
-  
+
   % Set return value
   H = AQN.H;
-  
+
 end
 
 end

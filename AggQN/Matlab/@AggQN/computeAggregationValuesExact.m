@@ -1,4 +1,4 @@
-% Copyright (C) 2019 Albert Berahas, Frank E. Curtis, Baoyu Zhou
+% Copyright (C) 2021 Albert Berahas, Frank E. Curtis, Baoyu Zhou
 %
 % All Rights Reserved.
 %
@@ -24,15 +24,15 @@ good_ind = [];
 
 % Loop through remaining levels in reverse order
 for level = size(AQN.Y,2)-AQN.j-1:-1:1
-  
+
   % Compute phi
   phi(level+2:size(AQN.Y,2)-AQN.j+1,level) = AQN.MA_j(level+2:size(AQN.Y,2)-AQN.j+1,level+1) + AQN.S(:,level+AQN.j+1:end)'*(AQN.b_j(level+1)*AQN.y_j + AQN.Y(:,level+AQN.j));
-  
+
   % Determine if new column of phi is in span of previous ones
   tau        = (phi(:,good_ind)'*phi(:,good_ind))\(phi(:,good_ind)'*phi(:,level));
   projection = phi(:,good_ind)*tau;
   error      = phi(:,level) - projection;
-  
+
   % Compute beta
   if norm(error) > AQN.proj_tol_beta * norm(projection)
     good_ind = [level; good_ind];
@@ -54,7 +54,7 @@ for level = size(AQN.Y,2)-AQN.j-1:-1:1
 
   % Call unit test for phi combination
   AQN.runUnitTest(3,level,phi,phi_comb);
-  
+
   % Compute null space for affine equations
   N = null(phi(:,level:size(AQN.Y,2)-AQN.j-1)'*AQN.invM_j(:,level+1:size(AQN.Y,2)-AQN.j+1));
   N = N(:,1);
@@ -81,10 +81,10 @@ for level = size(AQN.Y,2)-AQN.j-1:-1:1
     lambda = -b/(2*a);
 
   elseif isnan(radicand) || isinf(radicand)
-    
+
     % Abort!
     break;
-    
+
   else
 
     % Compute lambda

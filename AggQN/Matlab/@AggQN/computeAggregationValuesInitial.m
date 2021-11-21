@@ -1,4 +1,4 @@
-% Copyright (C) 2019 Albert Berahas, Frank E. Curtis, Baoyu Zhou
+% Copyright (C) 2021 Albert Berahas, Frank E. Curtis, Baoyu Zhou
 %
 % All Rights Reserved.
 %
@@ -10,7 +10,7 @@
 function computeAggregationValuesInitial(AQN)
 
 % Construct HS_j
-AQN.HS_j = AQN.computeInnerHessianProduct(AQN.S(:,AQN.j:end));  
+AQN.HS_j = AQN.computeInnerHessianProduct(AQN.S(:,AQN.j:end));
 
 % Construct SHS_j
 AQN.SHS_j = AQN.S(:,AQN.j:end)'*AQN.HS_j;
